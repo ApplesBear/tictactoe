@@ -75,6 +75,7 @@ function cashSequences(func) {
         }
         if (cash.has(key.join(''))) {
           currentKey = key.join('');
+          console.log('currentKey (cash find)' + currentKey);
           currentI = i;
           switch (i) {
             case '0':
@@ -148,11 +149,13 @@ function cashSequences(func) {
           for (let j = 0; j < sequences[i].length; j++) {
             if (sequence[j] === 'N') sequences[i][j] = 'N';
           }
+          console.log('sequence (cash find)' + sequences[i]);
           return func(sequences[i]);
         }
       }
       currentKey = null;
       currentI = null;
+      console.log('no cash' + sequences[0]);
       return func(sequences[0]);
     }
 
@@ -188,11 +191,13 @@ function cashSequences(func) {
           if (cashSeq[j] === 'N') sequences[j] = 'N';
         }
       }
+      console.log('endgame  no curent (set key)' + key.join(''));
+      console.log('endgame  no curent (set seq)' + sequences);
       cash.set(key.join(''), sequences);
       return;
     }
 
-    switch (currentI) {
+    switch (currentI + '') {
       case '0':
         break;
       case '1':
@@ -259,6 +264,9 @@ function cashSequences(func) {
     for (let j = 0; j < sequences.length; j++) {
       if (cashSeq[j] === 'N') sequences[j] = 'N';
     }
+
+    console.log('endgame (set current key)' + currentKey);
+    console.log('endgame (set current seq)' + sequences);
 
     cash.set(currentKey, sequences);
     currentI = null;
