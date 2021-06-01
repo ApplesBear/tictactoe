@@ -180,7 +180,6 @@ function nextMove() {
 
   if (seq.length === 0) {
     resign();
-    endGame('resign');
     return;
   }
 
@@ -194,7 +193,6 @@ function getMove() {
     key = seq[0];
     seq = seq[1];
     let cash = localStorage.getItem(key).split(',');
-    console.log('from cash ' + cash);
 
     for (let i = 0; i < seq.length; i++) {
       if (cash[i] === '0') {
@@ -217,7 +215,6 @@ function getMove() {
   }
 
   seq = seq.filter((cell) => cell !== 0);
-  console.log(seq.length);
 
   return seq;
 }
@@ -254,6 +251,8 @@ function endGame(winners) {
 
   if (winners === 'resign') {
     state = 'win';
+    document.querySelector('#gamefield caption').innerHTML =
+      'You won! Another game?';
     createResult(state);
     setCash();
     return;
@@ -263,17 +262,17 @@ function endGame(winners) {
     state = 'win';
     document.querySelector('#gamefield caption').innerHTML =
       'You won. Another game?';
-    winners.forEach((cell) => cell.parentElement.classList.add('winner'));
+    winners.forEach((cell) => cell.parentElement.classList.add('loser'));
   } else {
     state = 'lose';
     document.querySelector('#gamefield caption').innerHTML =
       'You lost. Another game?';
-    winners.forEach((cell) => cell.parentElement.classList.add('loser'));
+    winners.forEach((cell) => cell.parentElement.classList.add('winner'));
   }
 
   createResult(state);
 
-  if (state !== 'draw') setCash();
+  setCash();
 }
 
 function createResults() {
@@ -314,6 +313,13 @@ function checkWin() {
   );
 
   return function () {
+    let field = [].concat(cells);
+    field = field.filter((cell) => cell.innerHTML === '');
+
+    if (field.length < 1) {
+      endGame(null);
+    }
+
     for (let i = 0; i < patterns.length; i++) {
       if (patterns[i][0].innerHTML !== '') {
         if (
@@ -329,9 +335,15 @@ function checkWin() {
 }
 
 function resign() {
-  document.querySelector('#gamefield caption').innerHTML =
-    'You won! Another game?';
-  enableCells(false);
+  let field = getCells();
+  field = field.filter((cell) => cell.innerHTML === '');
+
+  if (field.length < 1) {
+    endGame(null);
+    return;
+  }
+
+  endGame('resign');
 }
 
 function playerMove(event) {
