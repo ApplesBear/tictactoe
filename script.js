@@ -1,11 +1,59 @@
 'use strict';
 
+//initialize game
 let checkWinner = checkWin();
-let getCurrent = setCurrentSign();
 let createResult = createResults();
 
+initButtons();
+setGameStart();
+
+function setGameStart() {
+  setCurrentSign();
+  let sign = getCurrentSign();
+  setCurrentSignInfo(sign);
+  
+  if (sign === '\u25EF') {
+    nextMove();
+  }
+  enableCells(true);
+}
+
+function initButtons() {
+  initNewGame();
+  initClearCash();
+}
+
+function initNewGame() {
+  let button = document.querySelector('#newgame');
+
+  button.addEventListener('click', () => {
+    resetField();
+    setGameStart();
+  });
+}
+
+function resetField() {
+  let cells = getCells();
+  cells.forEach((cell) => (cell.innerHTML = ''));
+  cells.forEach((cell) => cell.parentElement.classList.remove('winner'));
+  cells.forEach((cell) => cell.parentElement.classList.remove('loser'));
+}
+
+function initClearCash() {
+  let button = document.querySelector('#newsession');
+  let table = document.querySelector('#results tbody');
+
+  button.addEventListener('click', () => {
+    localStorage.clear();
+    table.innerHTML = '';
+    createResult = createResults();
+  });
+}
+
+
+
 function getCells() {
-  const field = Array.from(document.querySelectorAll('#gamefield td span'));
+  const field = Array.from(document.querySelectorAll('.cell'));
   const cells = [
     field[4],
     field[1],
@@ -20,41 +68,47 @@ function getCells() {
   return cells;
 }
 
+function getRandom(range) {
+  return Math.floor(Math.random() * range);
+}
+
 function setCurrentSign() {
-  let currentSign;
-  let current = Math.floor(Math.random() * 2);
-
-  currentSign = current === 0 ? '\u25EF' : '\u2573';
-
-  document.querySelector(
-    '#gamefield caption'
-  ).innerHTML = `You're playing <span>${currentSign}</span>`;
-
-  return function () {
-    return currentSign || 'not set';
-  };
+  let sign = getRandom(2) === 0 ? '\u25EF' : '\u2573';
+  localStorage.setItem('sign', sign);
 }
 
-function setGameStart() {
-  if (getCurrent() === '\u25EF') nextMove();
-  clearCash();
-
-  let button = document.querySelector('#newgame');
-  let cells = getCells();
-
-  button.addEventListener('click', () => {
-    cells.forEach((cell) => (cell.innerHTML = ''));
-    cells.forEach((cell) => cell.parentElement.classList.remove('winner'));
-    cells.forEach((cell) => cell.parentElement.classList.remove('loser'));
-    getCurrent = setCurrentSign();
-    if (getCurrent() === '\u25EF') nextMove();
-    enableCells(true);
-  });
+function getCurrentSign() {
+  return localStorage.getItem('sign');
 }
-setGameStart();
+
+function setCurrentSignInfo(sign) {
+  document.querySelector('#gamefield caption').innerHTML = `You're playing <span>${sign}</span>`;
+}
+
+
+
+function enableCells(yes) {
+  if (yes) {
+    getCells().forEach((cell) => {
+      if (cell.innerHTML === '') {
+        cell.parentElement.addEventListener('click', playerMove, true);
+      }
+    });
+    return;
+  }
+
+  if (!yes) {
+    getCells().forEach((cell) => {
+      cell.parentElement.removeEventListener('click', playerMove, true);
+    });
+    return;
+  }
+}
+
+
 
 function getKey() {
-  let player = getCurrent();
+  let player = getCurrentSign();
   let key = getCells().map((cell) => {
     if (cell.innerHTML !== player) {
       return 1;
@@ -164,8 +218,8 @@ function nextMove() {
   let seq = getMove();
 
   if (seq.length > 0) {
-    let move = Math.floor(Math.random() * seq.length);
-    let currentSign = getCurrent();
+    let move = getRandom(seq.length);
+    let currentSign = getCurrentSign();
     seq[move].innerHTML = currentSign === '\u25EF' ? '\u2573' : '\u25EF';
     document.querySelector('.prelast')?.classList.remove('prelast');
     document.querySelector('.last')?.classList.add('prelast');
@@ -219,25 +273,6 @@ function getMove() {
   return seq;
 }
 
-function enableCells(yes) {
-  if (yes) {
-    getCells().forEach((cell) => {
-      if (cell.innerHTML === '') {
-        cell.parentElement.addEventListener('click', playerMove, true);
-      }
-    });
-    return;
-  }
-
-  if (!yes) {
-    getCells().forEach((cell) => {
-      cell.parentElement.removeEventListener('click', playerMove, true);
-    });
-    return;
-  }
-}
-enableCells(true);
-
 function endGame(winners) {
   enableCells(false);
   let state;
@@ -258,7 +293,7 @@ function endGame(winners) {
     return;
   }
 
-  if (winners[0].innerHTML === getCurrent()) {
+  if (winners[0].innerHTML === getCurrentSign()) {
     state = 'win';
     document.querySelector('#gamefield caption').innerHTML =
       'You won. Another game?';
@@ -348,7 +383,7 @@ function resign() {
 
 function playerMove(event) {
   enableCells(false);
-  event.target.querySelector('span').innerHTML = getCurrent();
+  event.target.querySelector('span').innerHTML = getCurrentSign();
   document.querySelector('.prelast')?.classList.remove('prelast');
   document.querySelector('.last')?.classList.add('prelast');
   document.querySelector('.prelast')?.classList.remove('last');
@@ -359,15 +394,4 @@ function playerMove(event) {
     return;
   }
   nextMove();
-}
-
-function clearCash() {
-  let button = document.querySelector('#newsession');
-  let table = document.querySelector('#results tbody');
-
-  button.addEventListener('click', () => {
-    localStorage.clear();
-    table.innerHTML = '';
-    createResult = createResults();
-  });
 }
